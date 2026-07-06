@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Indústria Horizonte — Painel Industrial · Controladoria & BI</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f0f4f8; --card:#ffffff; --card2:#f8fafc;
+  --border:rgba(0,0,0,.08); --border2:rgba(37,99,235,.35); --line:#e2e8f0;
+  --t1:#0f172a; --t2:#475569; --t3:#94a3b8;
+  --blue:#2563eb; --cyan:#0891b2; --green:#059669; --purple:#7c3aed; --red:#dc2626; --teal:#0f766e;
+  --C1:#2563eb; --C2:#0891b2; --C3:#059669; --C4:#7c3aed;
+  --side:#1e293b; --side-ink:#94a3b8;
+  --font-body:'DM Sans',sans-serif; --font-mono:'DM Mono',monospace;
+  --r:12px; --r2:8px;
+  --shadow:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.05);
+  --shadow2:0 2px 8px rgba(37,99,235,.12);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font-body);background:var(--bg);color:var(--t1);font-size:13px}
+
+/* Sidebar */
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:214px;background:var(--side);display:flex;flex-direction:column;z-index:100;box-shadow:2px 0 12px rgba(0,0,0,.1)}
+.logo{display:flex;align-items:center;gap:10px;padding:18px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,#3b82f6,#06b6d4);border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;color:#fff;font-size:14px}
+.logo-name{font-size:14px;font-weight:700;color:#f1f5f9}
+.logo-sub{font-size:9px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:1.3px}
+.nav{padding:14px 10px;flex:1}
+.nav-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#64748b;padding:10px 10px 6px}
+.ni{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:var(--r2);cursor:pointer;color:var(--side-ink);font-size:12px;font-weight:500;text-decoration:none;transition:all .2s;margin-bottom:2px}
+.ni svg{width:15px;height:15px;opacity:.8;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ni:hover{background:rgba(255,255,255,.08);color:#e2e8f0}
+.ni.on{background:rgba(37,99,235,.9);color:#fff;font-weight:700}
+.side-foot{padding:14px 16px;border-top:1px solid rgba(255,255,255,.07)}
+.scope-badge{font-size:10px;color:#94a3b8;background:rgba(255,255,255,.06);padding:6px 10px;border-radius:6px;text-align:center;font-weight:600}
+
+/* Main */
+.main{margin-left:214px;padding:24px;min-height:100vh}
+.topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;gap:16px;flex-wrap:wrap}
+.page-ttl h1{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.page-ttl h1 em{color:var(--blue);font-style:normal}
+.page-ttl p{font-size:12px;color:var(--t2);margin-top:3px}
+.actions{display:flex;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r2);border:1px solid #cbd5e1;background:#fff;color:var(--t2);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn:hover{border-color:var(--blue);color:var(--blue);background:#f0f7ff}
+.btn-p{background:var(--blue);border-color:var(--blue);color:#fff;box-shadow:0 2px 6px rgba(37,99,235,.25)}
+.btn-p:hover{background:#1d4ed8;color:#fff}
+
+/* Filter bar */
+.fbar{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.fsel{padding:8px 12px;border-radius:var(--r2);border:1px solid #cbd5e1;background:#fff;font-size:12px;font-weight:600;color:var(--t2);font-family:var(--font-body);cursor:pointer}
+.fsel:focus{outline:none;border-color:var(--blue)}
+
+/* Cards de linha */
+.lg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;cursor:pointer;transition:all .25s;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.sc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--cc,var(--blue));transform:scaleX(0);transform-origin:left;transition:transform .3s}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow2);border-color:var(--cc)}
+.sc:hover::before{transform:scaleX(1)}
+.sc-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sc-name{font-size:12px;font-weight:700;color:var(--t2)}
+.sc-rank{font-size:10px;font-weight:700;color:var(--cc);background:color-mix(in srgb,var(--cc) 10%,#fff);padding:2px 8px;border-radius:20px}
+.sc-fat{font-size:19px;font-weight:700;letter-spacing:-.5px;font-family:var(--font-mono)}
+.sc-sub{display:flex;gap:14px;margin-top:8px}
+.sc-sub div{font-size:10px;color:var(--t3);font-weight:600}
+.sc-sub b{display:block;font-size:12px;color:var(--t1);font-weight:700}
+.sc-bar{height:4px;background:#e2e8f0;border-radius:2px;margin-top:10px;overflow:hidden}
+.sc-fill{height:100%;border-radius:2px;background:var(--cc)}
+
+/* KPI grid */
+.kg{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:22px}
+.kc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 14px;transition:all .25s;box-shadow:var(--shadow)}
+.kc:hover{border-color:var(--border2);transform:translateY(-2px);box-shadow:var(--shadow2)}
+.kc-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.ki{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:var(--kb,rgba(37,99,235,.1))}
+.ki svg{width:16px;height:16px;stroke:var(--kc-c,var(--blue));fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.kt{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px}
+.t-up{background:#d1fae5;color:#065f46}
+.t-dn{background:#fee2e2;color:#991b1b}
+.kv{font-size:18px;font-weight:700;letter-spacing:-.5px;font-family:var(--font-mono)}
+.kl{font-size:10px;color:var(--t2);font-weight:600;text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+
+/* Sections */
+.sec{margin-bottom:22px}
+.sec-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.sec-tt{font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px}
+.sec-tt .bar{display:block;width:3px;height:16px;border-radius:2px}
+.sec-sub{font-size:11px;color:var(--t2);margin-top:1px}
+.sbadge{font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:#dbeafe;color:#1e40af}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:12px}
+.cc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;overflow:hidden;box-shadow:var(--shadow)}
+.cc-t{font-size:13px;font-weight:700}
+.cc-s{font-size:11px;color:var(--t2);margin-bottom:14px}
+
+/* Table */
+.tbl-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:auto;box-shadow:var(--shadow);max-height:340px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{position:sticky;top:0;background:#f8fafc;text-align:left;padding:10px 14px;font-size:10px;text-transform:uppercase;letter-spacing:.8px;color:var(--t2);font-weight:700;border-bottom:1px solid var(--line);z-index:2}
+tbody td{padding:10px 14px;border-bottom:1px solid #f1f5f9;font-weight:500}
+tbody tr:hover{background:#f8fafc}
+td.num{font-family:var(--font-mono);text-align:right}
+th.num{text-align:right}
+.tag{font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px}
+.tag-g{background:#d1fae5;color:#065f46}
+.tag-p{background:#ede9fe;color:#5b21b6}
+.tag-r{background:#fee2e2;color:#991b1b}
+
+/* Alerts */
+.ag{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.al{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--ac,var(--blue));border-radius:var(--r);padding:14px 16px;box-shadow:var(--shadow)}
+.al-t{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--ac)}
+.al-d{font-size:11px;color:var(--t2);line-height:1.5}
+
+/* Footer */
+.foot{margin-top:26px;padding-top:14px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:10px;color:var(--t3);font-weight:600;flex-wrap:wrap;gap:8px}
+
+/* Animations */
+.anim{opacity:0;transform:translateY(10px);animation:fadeUp .5s forwards}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.d1{animation-delay:.05s}.d2{animation-delay:.1s}.d3{animation-delay:.15s}.d4{animation-delay:.2s}.d5{animation-delay:.25s}
+
+@media print{.sidebar,.actions,.fbar{display:none}.main{margin:0;padding:10px}}
+@media(max-width:1100px){.kg{grid-template-columns:repeat(3,1fr)}.lg{grid-template-columns:repeat(2,1fr)}.g2,.g21,.ag{grid-template-columns:1fr}}
+@media(max-width:700px){.sidebar{display:none}.main{margin-left:0}.kg,.lg{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">IH</div>
+    <div>
+      <div class="logo-name">Indústria Horizonte</div>
+      <div class="logo-sub">Alimentos Ltda</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Painéis</div>
+    <a class="ni on"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Visão Geral</a>
+    <a class="ni"><svg viewBox="0 0 24 24"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>Produção</a>
+    <a class="ni"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>Custos</a>
+    <a class="ni"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-6 6-4-4-3 3"/></svg>Comercial</a>
+    <a class="ni"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Logística</a>
+    <div class="nav-label">Controladoria</div>
+    <a class="ni"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>Fiscal</a>
+    <a class="ni"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Fechamento</a>
+  </nav>
+  <div class="side-foot">
+    <div class="scope-badge">DEMO · Dados fictícios</div>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar anim">
+    <div class="page-ttl">
+      <h1>Painel <em>Industrial</em> — Controladoria &amp; BI</h1>
+      <p>Produção, custos, comercial e logística consolidados · Jan–Jun 2026</p>
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="window.print()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+        PDF
+      </button>
+      <button class="btn btn-p" onclick="exportXLSX()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5M12 15V3"/></svg>
+        Exportar Excel
+      </button>
+    </div>
+  </div>
+
+  <div class="fbar anim d1">
+    <select class="fsel"><option>Período: Jan–Jun 2026</option><option>2025 completo</option></select>
+    <select class="fsel"><option>Todas as linhas</option><option>Massas</option><option>Biscoitos</option><option>Farinhas</option><option>Snacks</option></select>
+    <select class="fsel"><option>Todos os turnos</option><option>1º turno</option><option>2º turno</option><option>3º turno</option></select>
+    <select class="fsel"><option>Todas as regiões</option><option>Sul</option><option>Sudeste</option><option>Centro-Oeste</option></select>
+  </div>
+
+  <!-- Cards por linha de produção -->
+  <div class="lg anim d1">
+    <div class="sc" style="--cc:var(--C1)">
+      <div class="sc-hd"><span class="sc-name">Linha Massas</span><span class="sc-rank">#1</span></div>
+      <div class="sc-fat">R$ 8,42M</div>
+      <div class="sc-sub">
+        <div>Volume<b>2.140 t</b></div>
+        <div>Margem<b>31,2%</b></div>
+        <div>OEE<b>84%</b></div>
+      </div>
+      <div class="sc-bar"><div class="sc-fill" style="width:100%"></div></div>
+    </div>
+    <div class="sc" style="--cc:var(--C2)">
+      <div class="sc-hd"><span class="sc-name">Linha Biscoitos</span><span class="sc-rank">#2</span></div>
+      <div class="sc-fat">R$ 6,91M</div>
+      <div class="sc-sub">
+        <div>Volume<b>1.380 t</b></div>
+        <div>Margem<b>35,8%</b></div>
+        <div>OEE<b>79%</b></div>
+      </div>
+      <div class="sc-bar"><div class="sc-fill" style="width:82%"></div></div>
+    </div>
+    <div class="sc" style="--cc:var(--C3)">
+      <div class="sc-hd"><span class="sc-name">Linha Farinhas</span><span class="sc-rank">#3</span></div>
+      <div class="sc-fat">R$ 5,37M</div>
+      <div class="sc-sub">
+        <div>Volume<b>3.020 t</b></div>
+        <div>Margem<b>18,4%</b></div>
+        <div>OEE<b>91%</b></div>
+      </div>
+      <div class="sc-bar"><div class="sc-fill" style="width:64%"></div></div>
+    </div>
+    <div class="sc" style="--cc:var(--C4)">
+      <div class="sc-hd"><span class="sc-name">Linha Snacks</span><span class="sc-rank">#4</span></div>
+      <div class="sc-fat">R$ 3,18M</div>
+      <div class="sc-sub">
+        <div>Volume<b>410 t</b></div>
+        <div>Margem<b>42,1%</b></div>
+        <div>OEE<b>72%</b></div>
+      </div>
+      <div class="sc-bar"><div class="sc-fill" style="width:38%"></div></div>
+    </div>
+  </div>
+
+  <!-- KPI grid -->
+  <div class="kg anim d2">
+    <div class="kc" style="--kb:rgba(37,99,235,.1);--kc-c:var(--blue)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><span class="kt t-up">+12,4%</span></div>
+      <div class="kv">R$ 23,9M</div>
+      <div class="kl">Faturamento</div>
+    </div>
+    <div class="kc" style="--kb:rgba(8,145,178,.1);--kc-c:var(--cyan)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg></div><span class="kt t-up">+8,1%</span></div>
+      <div class="kv">6.950 t</div>
+      <div class="kl">Volume produzido</div>
+    </div>
+    <div class="kc" style="--kb:rgba(5,150,105,.1);--kc-c:var(--green)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M8 12l3 3 5-6"/></svg></div><span class="kt t-up">+2,3pp</span></div>
+      <div class="kv">82,4%</div>
+      <div class="kl">OEE médio</div>
+    </div>
+    <div class="kc" style="--kb:rgba(124,58,237,.1);--kc-c:var(--purple)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 15l-6-6-4 4-3-3"/></svg></div><span class="kt t-dn">+4,2%</span></div>
+      <div class="kv">R$ 2,31/kg</div>
+      <div class="kl">Custo unitário</div>
+    </div>
+    <div class="kc" style="--kb:rgba(5,150,105,.1);--kc-c:var(--green)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg></div><span class="kt t-up">+1,8pp</span></div>
+      <div class="kv">29,7%</div>
+      <div class="kl">Margem bruta</div>
+    </div>
+    <div class="kc" style="--kb:rgba(15,118,110,.1);--kc-c:var(--teal)">
+      <div class="kc-hd"><div class="ki"><svg viewBox="0 0 24 24"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></div><span class="kt t-dn">+0,9%</span></div>
+      <div class="kv">R$ 0,182/kg</div>
+      <div class="kl">Frete médio</div>
+    </div>
+  </div>
+
+  <!-- Evolução -->
+  <div class="sec anim d3">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-tt"><span class="bar" style="background:var(--blue)"></span>Evolução Financeira</div>
+        <div class="sec-sub">Faturamento × custo industrial × margem bruta mensal</div>
+      </div>
+      <span class="sbadge">Semestre 1 · 2026</span>
+    </div>
+    <div class="g21">
+      <div class="cc">
+        <div class="cc-t">Faturamento × Custo Industrial (R$ mi)</div>
+        <div class="cc-s">Margem bruta no eixo secundário</div>
+        <div id="chEvo"></div>
+      </div>
+      <div class="cc">
+        <div class="cc-t">Composição do Custo Industrial</div>
+        <div class="cc-s">Acumulado do semestre</div>
+        <div id="chCusto"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Produção -->
+  <div class="sec anim d4">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-tt"><span class="bar" style="background:var(--cyan)"></span>Eficiência de Produção</div>
+        <div class="sec-sub">OEE por linha e perdas de processo</div>
+      </div>
+    </div>
+    <div class="g2">
+      <div class="cc">
+        <div class="cc-t">OEE por Linha (%)</div>
+        <div class="cc-s">Disponibilidade × performance × qualidade · meta 85%</div>
+        <div id="chOEE"></div>
+      </div>
+      <div class="cc">
+        <div class="cc-t">Custo de Frete por Região (R$/kg)</div>
+        <div class="cc-s">Comparativo semestral · CIF</div>
+        <div id="chFrete"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela -->
+  <div class="sec anim d4">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-tt"><span class="bar" style="background:var(--green)"></span>Top Produtos</div>
+        <div class="sec-sub">Ranking por faturamento no semestre</div>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table id="tblProd">
+        <thead><tr>
+          <th>Produto</th><th>Linha</th><th class="num">Faturamento</th><th class="num">Volume (t)</th><th class="num">Margem</th><th>Status</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>Espaguete Premium 500g</td><td>Massas</td><td class="num">R$ 3.240.000</td><td class="num">820</td><td class="num">33,5%</td><td><span class="tag tag-g">Acima da meta</span></td></tr>
+          <tr><td>Biscoito Cream Cracker 400g</td><td>Biscoitos</td><td class="num">R$ 2.870.000</td><td class="num">590</td><td class="num">36,2%</td><td><span class="tag tag-g">Acima da meta</span></td></tr>
+          <tr><td>Farinha Tipo 1 · 5kg</td><td>Farinhas</td><td class="num">R$ 2.410.000</td><td class="num">1.480</td><td class="num">16,8%</td><td><span class="tag tag-p">Margem baixa</span></td></tr>
+          <tr><td>Penne Grano Duro 500g</td><td>Massas</td><td class="num">R$ 2.180.000</td><td class="num">540</td><td class="num">30,1%</td><td><span class="tag tag-g">Acima da meta</span></td></tr>
+          <tr><td>Snack Integral Multigrãos 80g</td><td>Snacks</td><td class="num">R$ 1.960.000</td><td class="num">210</td><td class="num">44,7%</td><td><span class="tag tag-g">Acima da meta</span></td></tr>
+          <tr><td>Biscoito Recheado Choc 130g</td><td>Biscoitos</td><td class="num">R$ 1.720.000</td><td class="num">340</td><td class="num">34,9%</td><td><span class="tag tag-g">Acima da meta</span></td></tr>
+          <tr><td>Farinha Integral 1kg</td><td>Farinhas</td><td class="num">R$ 1.340.000</td><td class="num">760</td><td class="num">21,3%</td><td><span class="tag tag-p">Margem baixa</span></td></tr>
+          <tr><td>Lasanha Pré-cozida 500g</td><td>Massas</td><td class="num">R$ 1.190.000</td><td class="num">280</td><td class="num">28,4%</td><td><span class="tag tag-r">Queda de volume</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Alertas -->
+  <div class="sec anim d5">
+    <div class="sec-hd">
+      <div>
+        <div class="sec-tt"><span class="bar" style="background:var(--purple)"></span>Alertas de Controladoria</div>
+        <div class="sec-sub">Pontos de atenção do período</div>
+      </div>
+    </div>
+    <div class="ag">
+      <div class="al" style="--ac:var(--red)">
+        <div class="al-t">Custo de trigo +9,3% no trimestre</div>
+        <div class="al-d">Pressão sobre a margem das linhas Massas e Farinhas. Recomenda-se revisar política de hedge e antecipar compras do 3º trimestre.</div>
+      </div>
+      <div class="al" style="--ac:var(--purple)">
+        <div class="al-t">OEE da linha Snacks em 72%</div>
+        <div class="al-d">13 pontos abaixo da meta, concentrado em paradas de setup. Estudo de troca rápida (SMED) pode recuperar ~R$ 180 mil/semestre.</div>
+      </div>
+      <div class="al" style="--ac:var(--green)">
+        <div class="al-t">Frete Sudeste renegociado: −6,4%</div>
+        <div class="al-d">Novo contrato com transportadora reduziu o CIF da região. Economia projetada de R$ 96 mil no semestre, já refletida em junho.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <span>Indústria Horizonte Alimentos Ltda · CNPJ 00.000.000/0001-00 (fictício)</span>
+    <span>Painel demonstrativo · dados simulados · desenvolvido por Bruno Barbosa — Controladoria &amp; BI</span>
+    <span>Atualizado em 05/07/2026</span>
+  </div>
+</main>
+
+<script>
+const MESES=['Jan','Fev','Mar','Abr','Mai','Jun'];
+const FAT=[3.62,3.71,3.95,4.08,4.21,4.31];
+const CUSTO=[2.58,2.66,2.79,2.86,2.94,2.99];
+const MARGEM=[28.7,28.3,29.4,29.9,30.2,30.6];
+const CA=['#2563eb','#0891b2','#059669','#7c3aed','#0f766e','#475569'];
+
+function baseChart(h=240){
+  return {
+    chart:{background:'transparent',fontFamily:'DM Sans, sans-serif',height:h,toolbar:{show:false},animations:{enabled:true,speed:600}},
+    theme:{mode:'light'},
+    grid:{borderColor:'#e2e8f0',strokeDashArray:4},
+    tooltip:{theme:'light'},
+    dataLabels:{enabled:false}
+  };
+}
+const AXIS={labels:{style:{colors:'#475569',fontWeight:600}}};
+const LEGEND={position:'top',horizontalAlign:'left',labels:{colors:'#475569'},markers:{width:10,height:10,radius:3}};
+
+// Evolução: faturamento × custo (colunas) + margem (linha, eixo 2)
+new ApexCharts(document.querySelector('#chEvo'),{
+  ...baseChart(280),
+  chart:{...baseChart(280).chart,type:'line',stacked:false},
+  series:[
+    {name:'Faturamento',type:'column',data:FAT},
+    {name:'Custo industrial',type:'column',data:CUSTO},
+    {name:'Margem bruta (%)',type:'line',data:MARGEM}
+  ],
+  xaxis:{categories:MESES,...AXIS},
+  yaxis:[
+    {labels:{style:{colors:'#475569'},formatter:v=>'R$ '+v.toFixed(1)+'M'}},
+    {show:false},
+    {opposite:true,labels:{style:{colors:'#475569'},formatter:v=>v.toFixed(0)+'%'},min:24,max:34}
+  ],
+  colors:[CA[0],CA[1],CA[2]],
+  stroke:{width:[0,0,3],curve:'smooth'},
+  plotOptions:{bar:{columnWidth:'55%',borderRadius:4}},
+  markers:{size:[0,0,5]},
+  legend:LEGEND
+}).render();
+
+// Donut de custos
+new ApexCharts(document.querySelector('#chCusto'),{
+  ...baseChart(280),
+  chart:{...baseChart(280).chart,type:'donut'},
+  series:[46,21,14,11,8],
+  labels:['Matéria-prima','Mão de obra','Energia','Embalagem','Manutenção'],
+  colors:CA,
+  legend:{...LEGEND,position:'bottom'},
+  plotOptions:{pie:{donut:{size:'68%',labels:{show:true,total:{show:true,label:'Custo total',fontSize:'11px',color:'#475569',formatter:()=>'R$ 16,8M'}}}}},
+  stroke:{width:2,colors:['#fff']}
+}).render();
+
+// OEE por linha
+new ApexCharts(document.querySelector('#chOEE'),{
+  ...baseChart(250),
+  chart:{...baseChart(250).chart,type:'bar'},
+  series:[{name:'OEE',data:[84,79,91,72]}],
+  xaxis:{categories:['Massas','Biscoitos','Farinhas','Snacks'],...AXIS},
+  yaxis:{labels:{style:{colors:'#475569'},formatter:v=>v+'%'},max:100},
+  colors:CA,
+  plotOptions:{bar:{columnWidth:'50%',borderRadius:6,distributed:true}},
+  legend:{show:false},
+  annotations:{yaxis:[{y:85,borderColor:'#dc2626',strokeDashArray:5,label:{text:'Meta 85%',style:{color:'#fff',background:'#dc2626',fontSize:'10px',fontWeight:700}}}]}
+}).render();
+
+// Frete por região
+new ApexCharts(document.querySelector('#chFrete'),{
+  ...baseChart(250),
+  chart:{...baseChart(250).chart,type:'bar'},
+  series:[{name:'1º tri',data:[0.148,0.196,0.231]},{name:'2º tri',data:[0.143,0.183,0.224]}],
+  xaxis:{categories:['Sul','Sudeste','Centro-Oeste'],...AXIS},
+  yaxis:{labels:{style:{colors:'#475569'},formatter:v=>'R$ '+v.toFixed(3)}},
+  colors:[CA[1],CA[0]],
+  plotOptions:{bar:{columnWidth:'55%',borderRadius:4}},
+  legend:LEGEND
+}).render();
+
+// Export Excel multi-aba
+function exportXLSX(){
+  const wb=XLSX.utils.book_new();
+  const resumo=[
+    ['Indicador','Valor','Variação'],
+    ['Faturamento (R$)',23880000,'+12,4%'],
+    ['Volume produzido (t)',6950,'+8,1%'],
+    ['OEE médio (%)',82.4,'+2,3pp'],
+    ['Custo unitário (R$/kg)',2.31,'+4,2%'],
+    ['Margem bruta (%)',29.7,'+1,8pp'],
+    ['Frete médio (R$/kg)',0.182,'+0,9%']
+  ];
+  const evo=[['Mês','Faturamento (R$ mi)','Custo (R$ mi)','Margem (%)'],
+    ...MESES.map((m,i)=>[m,FAT[i],CUSTO[i],MARGEM[i]])];
+  const linhas=[
+    ['Linha','Faturamento (R$)','Volume (t)','Margem (%)','OEE (%)'],
+    ['Massas',8420000,2140,31.2,84],
+    ['Biscoitos',6910000,1380,35.8,79],
+    ['Farinhas',5370000,3020,18.4,91],
+    ['Snacks',3180000,410,42.1,72]
+  ];
+  const prod=[];
+  document.querySelectorAll('#tblProd tr').forEach(tr=>{
+    prod.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText));
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(resumo),'Resumo');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(evo),'Evolução');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(linhas),'Linhas');
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(prod),'Produtos');
+  XLSX.writeFile(wb,'painel_industrial_horizonte.xlsx');
+}
+</script>
+</body>
+</html>
